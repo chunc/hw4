@@ -1,0 +1,1 @@
+I have implemented the Google instant extra credit feature.  Results, suggestion word, and NBA stats all instantly appear on each key stroke.  In fact, there is not even a submit button.  

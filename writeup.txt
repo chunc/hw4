@@ -1,0 +1,22 @@
+First and foremost, I have an index.html which is the front end for the search engine, and a admin.html which gives you crawler information.
+
+WebService1.asmx handles any inputs from index.html, while WebService2.asmx, handles communication for admin.html.
+
+To get the NBA stats to appear when a player name has been entered through the search box, I used CORS instead of the JSONP for my cross domain JSON api calls.  
+
+Below is a sample code:
+
+ $.get('http://jsonp.jit.su/?url=http://jsonview.com/example.json', function(data){
+alert('pretty awesome, eh? ' + data.awesome);
+});
+
+I use a simple GET request, and funnel the URL through http://jsonp.jit.su/ to handle the cross domain request.  Code is a lot easier to write, and its the only method that worked for me.
+
+The webcrawler looks for links, and stores words from page titles in an inverted index in the Azure table.
+
+A linq query sorts the result by date, group them by page title, selects the first result from each group.  To cheat on speed, I limit the result to only 25 entries.  My reasoning is if you type the word "the", you dont want to see the thousands of entries that contain the word "the".
+
+Caching is handled by a dictionary object.  The query will first be checked if it already exists in the cached dictionary, and return result from dictionary instead of having to make a Azure Table call.
+
+
+

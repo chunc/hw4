@@ -1,0 +1,268 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ChunC Search</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+    <style type="text/css">
+        
+        #suggest_form {
+            border: 1px solid black;
+            padding-left: 10px;
+            border-top: none;
+            border-radius: 3px;
+            border-top-right-radius: 0px;
+            border-top-left-radius: 0px;
+            
+        }
+        #suggest_form li {
+            list-style: none;
+            cursor: pointer;
+        }
+        #suggest_form li:hover {
+            background-color: rgba(135, 89, 232, 0.4);
+        }
+
+        #query_links li {
+            list-style: none;
+        }
+
+        #query_links li:hover {
+            background-color: rgba(156, 229, 255, 0.5);
+        }
+
+    </style> 
+
+
+</head>
+<body onload="">
+    <!-- ================= -->
+    <!--Presentation Tier-->
+    <!-- ================= -->
+
+    <div class="container-fluid">
+        <h1>ChunC Super Awesome Search Engine</h1>
+        <!--<button onclick="buildTrie()">Build Trie</button>-->
+        <br>
+        <div class="row">
+            <form role="form" onsubmit="">
+                <!--<form role="form" onsubmit="getLinks(this.submitquery.value)">-->
+                <div class="col-sm-6">
+                    <input type="text" class="form-control" id="string_input" placeholder="Search Here" value="" name="submitquery">
+                    <ul id="suggest_form"></ul>
+                    <!--<button type="submit" class="btn btn-default" onclick="">Go</button>-->
+                </div>
+            </form>
+            <div class="col-sm-4 col-sm-offset-1" id="nba">
+                <table class="table table-hover" id="nba_stat">
+                    <tr id="table-headers">
+                        <th>Player Name</th>
+                        <th>GP</th>
+                        <th>FGP</th>
+                        <th>TPP</th>
+                        <th>FTP</th>
+                        <th>PPG</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+
+        <div id="query_result">
+            <ul id="query_links"></ul>
+        </div>
+
+        <div id="ad_placement">
+            <!--<script type='text/javascript' src='http://ads.qadserve.com/t?id=66531ea4-3c86-4cc9-a7c6-f7e1cf9c84b4&size=160x600'></script>-->
+            <script type='text/javascript' src='http://ads.qadserve.com/t?id=aeb07edd-6e77-4ab6-b554-43db0acf624c&size=468x60'></script>
+        </div>
+    </div>
+
+   
+    
+
+   
+
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <!--<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>-->
+    <script type="text/javascript">
+
+        //----------------
+        //Business Tier
+        //----------------
+
+        //Populates input box after clicking on a suggestion list
+        $('#nba_stat').css('display', 'none');
+        $(document.body).on('click', '#suggest_form li', function () {
+            
+            //$('#suggest_form').on('click', 'li', function () {
+                var clickSearch = $(this).text();
+                console.log("Click: " + clickSearch);
+                $('#string_input').val(clickSearch);
+                var nbaquery = "?name=" + clickSearch.toLocaleLowerCase();
+                searchNBA(nbaquery);
+                getLinks(clickSearch.toLocaleLowerCase());
+                $('#suggest_form').html("");
+            //});
+        });
+
+        $(document.body).on('click', "[id != '#suggest_form']", function () {
+            //alert("fuxx");
+            $('#suggest_form').html("");
+            
+        });
+
+        
+        function buildTrie() {
+            console.log("Start Building");
+            $.ajax({
+                type: "POST",
+                url: "WebService1.asmx/buildTrieStructure",
+                contentType: "application/json; charset=utf-8",
+                dataType: "JSON",
+                success: function (msg) {
+                    console.log("Yes: "+msg.d);    
+                },
+                error: function (msg) {
+                    console.log("Trie Load Not working");
+                }
+            });
+        }
+
+       
+        // Autocomplete search function
+        $(function search () {
+            
+            $(".form-control").keyup(function () {
+                var key_input = $(this).val();
+                key_input = key_input.trim();
+                var jsonp_input = key_input.toLowerCase();
+                var trie_input = formatString(key_input);
+
+                if (key_input !== '') {
+                    var query = "?name=" + jsonp_input;
+                    //console.log(query);
+                    searchNBA(query);
+                    
+                    var data = {};
+                    data.input = trie_input;
+                    getTrieSuggest(data);
+                    getLinks(key_input.toLowerCase());
+                } else if (key_input == '') {
+                    $('.table_rows').html("");
+                    $('#suggest_form').html("");
+                    $('#query_links').html("");
+
+                }
+            });
+        });
+
+
+        //Converts space characters into underscores
+        function formatString(string) {
+            //var text = string.charAt(0).toUpperCase() + string.slice(1); //Capitalizes first letter
+            var text = string.replace(/ /g, '_') //Converts spaces into underscore
+            text = text.toLowerCase();
+            return text;
+        }
+
+        function searchNBA(query) {
+            //console.log("nba query: "+query)
+            var url = "http://ec2-54-187-26-146.us-west-2.compute.amazonaws.com/info344/nba/get_stats.php";
+            //var jitsu = "http://jsonp.jit.su/?url=";
+
+            $.get("http://jsonp.jit.su/?url=" + url + query, function (response) {
+                $('.table_rows').html("");
+                if (response.length) {
+                    console.log("data: " + response[0].PlayerName);
+                    var tr = "<tr class='table_rows'>";
+                    var td1 = "<td>" + response[0].PlayerName + "</td>";
+                    var td2 = "<td>" + response[0].GP + "</td>";
+                    var td3 = "<td>" + response[0].FGP + "</td>";
+                    var td4 = "<td>" + response[0].TPP + "</td>";
+                    var td5 = "<td>" + response[0].FTP + "</td>";
+                    var td6 = "<td>" + response[0].PPG + "</td></tr>";
+                    $('#nba_stat').append(tr + td1 + td2 + td3 + td4 + td5 + td6);
+                    $('#nba_stat').css('display', "");
+                } else {
+                    $('#nba_stat').css('display', 'none');
+                }
+            });
+        }
+
+        function getTrieSuggest(data) {
+            $.ajax({
+                type: "POST",
+                url: "WebService1.asmx/getSearchResult",
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                dataType: "JSON",
+                success: function (msg) {
+                    var list = JSON.parse(msg.d);
+                    mainlist = [];
+                    $('#suggest_form').html("");  
+                    jQuery.each(list, function (index, value) {
+                        var word = list[index].replace(/_/g, " ");
+                        word = toTitleCase(word);
+                        var item = "<li>" + word + "</li>";
+                        //console.log(item);
+                        $("#suggest_form").append(item);  
+                    });
+                },
+                error: function (msg) {
+                    console.log("Trie Search Not working");
+                }
+            });
+        }
+
+        function getLinks(query) {
+            
+            var data = {};
+            data.input = query;
+            //var data = query;
+            $.ajax({
+                type: "POST",
+                url: "WebService1.asmx/queryTableIndex",
+                data: JSON.stringify(data),
+                contentType: "application/json; charset=utf-8",
+                dataType: "JSON",
+                success: function (msg) {
+                    //console.log("success AJAX call");
+                    if (msg.d !== null) {
+                        var list = JSON.parse(msg.d);
+                        $('#query_links').html("");
+                        jQuery.each(list, function (index, value) {
+                            var word = value.split(";;;");
+                            var li = "<li><blockquote><p><a href=" + word[0] + ">" + word[1] + "</a></p><footer>Date Published: " + word[2] + "</footer></blockquite></li>";
+                            $('#query_links').append(li);
+                        });
+
+                    }
+                    $('#query_result').html();
+                },
+                error: function (msg) {
+                    console.log("AJAX FAIL");
+                }
+            });
+        }
+
+        //Capitalizes the first letter of each word
+        function toTitleCase(str) {
+            return str.replace(/\w\S*/g, function (txt) { return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(); });
+        }
+
+
+    </script>
+
+</body>
+</html>
+

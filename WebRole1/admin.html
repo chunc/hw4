@@ -1,0 +1,195 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ChunC Web Crawler</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body onload="getStats()">
+    <!-- =============== -->
+    <!--Presentation Tier-->
+    <!-- =============== -->
+
+    <div class="container" id="content">
+        <h1>ChunC WebCrawler</h1>
+        <h2>Controls</h2>
+        <p>
+            <button type="button" class="btn btn-primary btn-lg" onclick="start_crawler()">Start Crawl</button>
+            <button type="button" class="btn btn-default btn-lg" onclick="stop_crawler()">Stop Crawl</button>
+            <button type="button" class="btn btn-default btn-lg" onclick="getStats()">Refresh Stats</button>
+        </p>
+
+        <h2>Stats</h2>
+        <dl class="dl-horizontal">
+            <dt>CPU Utilization:</dt>
+            <dd id="cpu">Loading...</dd>
+            <dt>RAM Available:</dt>
+            <dd id="ram">Loading...</dd>
+            <dt>Queue Size:</dt>
+            <dd id="qsize">Loading...</dd>
+            <dt>Total URLs Crawled:</dt>
+            <dd id="urlnum">Loading...</dd>
+        </dl>
+        <br>
+        <!--<h3>Last 10 URL Crawled</h3>
+        <table class="table" id="results">
+            <tr class="table-headers">
+                <th>URL</th>
+                <th>Page Title</th>
+            </tr>
+        </table>-->
+    </div>
+
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+
+        //==============
+        //Business Tier
+        //==============
+        function start_crawler() {
+            $.ajax({
+                type: "POST",
+                url: "WebService2.asmx/startCrawl",
+                success: function (msg) {
+                    console.log("Success");
+                },
+                error: function (msg) {
+                    console.log("Not working");
+                }
+            });
+        }
+
+        function stop_crawler() {
+            $.ajax({
+                type: "POST",
+                url: "WebService2.asmx/stopCrawl",
+                success: function (msg) {
+                    console.log("Success");
+                },
+                error: function (msg) {
+                    console.log("Not working");
+                }
+            });
+        }
+
+        function getStats() {
+            getCPU();
+            getRAM();
+            getQsize();
+            getIndexSize();
+            //getTenURL();
+        }
+
+        function getCPU() {
+            $.ajax({
+                type: "POST",
+                url: "WebService2.asmx/getCPU",
+                contentType: "application/json; charset=utf-8",
+                dataType: "JSON",
+                success: function (msg) {
+                    console.log("Success");
+                    console.log(msg.d)
+                    $("#cpu").html(msg.d);
+                },
+                error: function (msg) {
+                    console.log("CPU Counter Not working");
+                }
+            });
+        }
+
+        function getRAM() {
+            $.ajax({
+                type: "POST",
+                url: "WebService2.asmx/getRAM",
+                contentType: "application/json; charset=utf-8",
+                dataType: "JSON",
+                success: function (msg) {
+                    $("#ram").html(msg.d);
+                },
+                error: function (msg) {
+                    console.log("RAM Counter Not working");
+                }
+            });
+        }
+
+        function getQsize() {
+            $.ajax({
+                type: "POST",
+                url: "WebService2.asmx/getQueueLength",
+                contentType: "application/json; charset=utf-8",
+                dataType: "JSON",
+                success: function (msg) {
+                    $("#qsize").html(msg.d);
+                },
+                error: function (msg) {
+                    console.log("Queue Size Counter Not working");
+                }
+            });
+        }
+
+        function getIndexSize() {
+            $.ajax({
+                type: "POST",
+                url: "WebService2.asmx/getIndexSize",
+                contentType: "application/json; charset=utf-8",
+                dataType: "JSON",
+                success: function (msg) {
+                    $("#urlnum").html(msg.d);
+                },
+                error: function (msg) {
+                    console.log("Index Size Counter Not working");
+                }
+            });
+        }
+
+        /*
+        function getTenURL() {
+            $('.table_rows').html("");
+            $.ajax({
+                type: "POST",
+                url: "WebService2.asmx/getTenURL",
+                contentType: "application/json; charset=utf-8",
+                dataType: "JSON",
+                success: function (msg) {
+                    console.log(msg.d);
+                    var text = msg.d;
+                    if (text !== "nothing") {
+                        var list = JSON.parse(msg.d);
+                        console.log("Array Size: " + list.length);
+                        jQuery.each(list, function (index, value) {
+                            var word = value.split(";;;");
+                            var tr = "<tr class='table_rows'>";
+                            var td1 = "<td>" + word[0] + "</td>";
+                            var td2 = "<td>" + word[1] + "</td></tr>";
+                            $('#results').append(tr + td1 + td2);
+                        });
+
+                    }
+                },
+                error: function (msg) {
+                    console.log("URL List Not working");
+                }
+            });  
+        }
+        */
+
+
+    </script>
+</body>
+</html>
